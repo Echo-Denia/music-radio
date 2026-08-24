@@ -7,7 +7,7 @@
   "icon": "media/marketplace-icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/vscode-music-radio"
+    "url": "https://github.com/Echo-Denia/vscode-music-radio"
   },
   "engines": {
     "vscode": "^1.85.0"
