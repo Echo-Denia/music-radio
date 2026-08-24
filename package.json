@@ -4,7 +4,7 @@
   "description": "A music player with real-time lyrics display for VSCode",
   "version": "0.1.0",
   "publisher": "Echo-Denia",
-  "icon": "media/marketplace-icon.svg",
+  "icon": "media/marketplace-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/YOUR_USERNAME/vscode-music-radio"
@@ -25,7 +25,9 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
-  "extensionKind": ["ui"],
+  "extensionKind": [
+    "ui"
+  ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -283,13 +285,16 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run esbuild-base -- --production",
+    "esbuild-base": "node esbuild.js",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "node esbuild.js",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.25.0",
     "typescript": "^5.3.0"
   },
   "dependencies": {
