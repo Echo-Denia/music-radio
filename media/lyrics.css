@@ -1,0 +1,123 @@
+/** @format */
+
+:root {
+  --bg-primary: var(--vscode-editor-background);
+  --text-primary: var(--vscode-foreground);
+  --text-secondary: var(--vscode-descriptionForeground);
+  --accent: var(--vscode-button-background);
+  --active: var(--vscode-list-activeSelectionBackground);
+  --active-fg: var(--vscode-list-activeSelectionForeground);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+}
+
+#lyrics-container {
+  height: 100vh;
+  overflow-y: auto;
+  padding: 8px 0;
+  scroll-behavior: smooth;
+}
+
+.no-lyrics {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  gap: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.no-lyrics svg {
+  opacity: 0.4;
+}
+
+.no-lyrics p {
+  font-size: 13px;
+}
+
+.no-lyrics .hint {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.lyrics {
+  display: none;
+}
+
+.lyrics.has-lyrics {
+  display: block;
+}
+
+.lyric-line {
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  opacity: 0.5;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lyric-line:hover {
+  opacity: 0.8;
+  background: var(--vscode-list-hoverBackground);
+}
+
+.lyric-line.active {
+  opacity: 1;
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--active);
+}
+
+.lyric-line.nearby {
+  opacity: 0.7;
+}
+
+.lyric-translation {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+.lyric-line.active .lyric-translation {
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.lyrics-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lyrics-header svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}

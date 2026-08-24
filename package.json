@@ -1,0 +1,298 @@
+{
+  "name": "vscode-music-radio",
+  "displayName": "Music Radio",
+  "description": "A music player with real-time lyrics display for VSCode",
+  "version": "0.1.0",
+  "publisher": "Echo-Denia",
+  "icon": "media/marketplace-icon.svg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/vscode-music-radio"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "music",
+    "player",
+    "lyrics",
+    "audio"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "extensionKind": ["ui"],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "music-radio",
+          "title": "Music Radio",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "music-radio": [
+        {
+          "id": "music-radio-library",
+          "name": "Music Library",
+          "icon": "media/icon.svg",
+          "when": "!music-radio:remoteMode"
+        },
+        {
+          "id": "music-radio-lyrics",
+          "name": "Lyrics",
+          "type": "webview",
+          "when": "!music-radio:remoteMode"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "music-radio.openPlayer",
+        "title": "Music Radio: Open Player"
+      },
+      {
+        "command": "music-radio.reload",
+        "title": "Music Radio: Reload Extension",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "music-radio.playPause",
+        "title": "Music Radio: Play/Pause"
+      },
+      {
+        "command": "music-radio.next",
+        "title": "Music Radio: Next Track"
+      },
+      {
+        "command": "music-radio.previous",
+        "title": "Music Radio: Previous Track"
+      },
+      {
+        "command": "music-radio.toggleShuffle",
+        "title": "Music Radio: Toggle Shuffle"
+      },
+      {
+        "command": "music-radio.toggleRepeat",
+        "title": "Music Radio: Toggle Repeat"
+      },
+      {
+        "command": "music-radio.addFolder",
+        "title": "Music Radio: Add Music Folder"
+      },
+      {
+        "command": "music-radio.scanFolder",
+        "title": "Music Radio: Scan Music Folders"
+      },
+      {
+        "command": "music-radio.playTrack",
+        "title": "Music Radio: Play Track",
+        "icon": "$(play)"
+      },
+      {
+        "command": "music-radio.playNext",
+        "title": "Music Radio: Play Next",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "music-radio.removeFromPlaylist",
+        "title": "Music Radio: Remove from Playlist"
+      },
+      {
+        "command": "music-radio.clearPlaylist",
+        "title": "Music Radio: Clear Playlist"
+      },
+      {
+        "command": "music-radio.refreshLibrary",
+        "title": "Music Radio: Refresh Library",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "music-radio.search",
+        "title": "Music Radio: Search Music",
+        "icon": "$(search)"
+      },
+      {
+        "command": "music-radio.clearSearch",
+        "title": "Music Radio: Clear Search",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "music-radio.revealInExplorer",
+        "title": "Music Radio: Reveal in File Explorer",
+        "icon": "$(file-symlink-file)"
+      },
+      {
+        "command": "music-radio.copyAbsolutePath",
+        "title": "Music Radio: Copy Absolute Path"
+      },
+      {
+        "command": "music-radio.copyRelativePath",
+        "title": "Music Radio: Copy Relative Path"
+      },
+      {
+        "command": "music-radio.removeFolder",
+        "title": "Music Radio: Remove Folder from Library",
+        "icon": "$(close)"
+      },
+      {
+        "command": "music-radio.reloadFolder",
+        "title": "Music Radio: Reload Folder",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "music-radio.refreshLibrary",
+          "when": "view == music-radio-library",
+          "group": "navigation"
+        },
+        {
+          "command": "music-radio.addFolder",
+          "when": "view == music-radio-library",
+          "group": "navigation"
+        },
+        {
+          "command": "music-radio.search",
+          "when": "view == music-radio-library",
+          "group": "navigation"
+        },
+        {
+          "command": "music-radio.clearSearch",
+          "when": "view == music-radio-library",
+          "group": "navigation"
+        },
+        {
+          "command": "music-radio.reload",
+          "when": "view == music-radio-library",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "music-radio.playTrack",
+          "when": "view == music-radio-library && viewItem == track",
+          "group": "inline"
+        },
+        {
+          "command": "music-radio.playNext",
+          "when": "view == music-radio-library && viewItem == track",
+          "group": "inline"
+        },
+        {
+          "command": "music-radio.playTrack",
+          "when": "view == music-radio-library && viewItem == track",
+          "group": "1_play@1"
+        },
+        {
+          "command": "music-radio.playNext",
+          "when": "view == music-radio-library && viewItem == track",
+          "group": "1_play@2"
+        },
+        {
+          "command": "music-radio.revealInExplorer",
+          "when": "view == music-radio-library && viewItem == track",
+          "group": "2_file@1"
+        },
+        {
+          "command": "music-radio.copyAbsolutePath",
+          "when": "view == music-radio-library && viewItem == track",
+          "group": "2_file@2"
+        },
+        {
+          "command": "music-radio.copyRelativePath",
+          "when": "view == music-radio-library && viewItem == track",
+          "group": "2_file@3"
+        },
+        {
+          "command": "music-radio.removeFolder",
+          "when": "view == music-radio-library && viewItem == folder",
+          "group": "1_folder@1"
+        },
+        {
+          "command": "music-radio.reloadFolder",
+          "when": "view == music-radio-library && viewItem == folder",
+          "group": "1_folder@2"
+        },
+        {
+          "command": "music-radio.reloadFolder",
+          "when": "view == music-radio-library && viewItem == folder",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Music Radio",
+      "properties": {
+        "music-radio.musicFolders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Folders to scan for music files"
+        },
+        "music-radio.volume": {
+          "type": "number",
+          "default": 80,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Default volume (0-100)"
+        },
+        "music-radio.shuffle": {
+          "type": "boolean",
+          "default": false,
+          "description": "Shuffle mode"
+        },
+        "music-radio.repeat": {
+          "type": "string",
+          "enum": [
+            "none",
+            "all",
+            "one"
+          ],
+          "default": "none",
+          "description": "Repeat mode"
+        },
+        "music-radio.supportedFormats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "mp3",
+            "flac",
+            "wav",
+            "ogg",
+            "m4a",
+            "aac",
+            "wma",
+            "opus",
+            "mp4"
+          ],
+          "description": "Supported audio file extensions"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "music-metadata": "^8.1.0"
+  }
+}
