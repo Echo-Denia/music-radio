@@ -2,7 +2,11 @@
 
 # Music Radio - VSCode 音乐播放器
 
-一款在 VSCode 中运行的音乐播放器插件，支持实时歌词显示。
+[![VSCode Marketplace](https://img.shields.io/visual-studio-marketplace/v/Echo-Denia.vscode-music-radio?label=VSCode%20Marketplace&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=Echo-Denia.vscode-music-radio)
+[![GitHub](https://img.shields.io/github/stars/Echo-Denia/vscode-music-radio?style=social&logo=github)](https://github.com/Echo-Denia/vscode-music-radio)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+一款在 VSCode 中运行的音乐播放器插件，支持实时歌词显示。边写代码边听歌，摸鱼必备 🎧
 
 ## 功能特性
 
@@ -16,19 +20,26 @@
 
 ## 安装方式
 
-### 方式一：从 VSIX 文件安装
+### 方式一：从 VSCode 扩展市场安装（推荐）
 
-1. 下载 `.vsix` 文件
-2. 打开 VSCode，进入扩展面板（Ctrl+Shift+X）
-3. 点击扩展面板右上角的 "..." 菜单
-4. 选择 "从 VSIX 安装..."
-5. 选择下载的 `.vsix` 文件
+1. 打开 VSCode，进入扩展面板（`Ctrl+Shift+X`）
+2. 搜索 **Music Radio**
+3. 点击安装
+
+或直接访问 [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=Echo-Denia.vscode-music-radio) 页面安装。
 
 ### 方式二：命令行安装
 
 ```bash
-code --install-extension vscode-music-radio-0.1.0.vsix
+code --install-extension Echo-Denia.vscode-music-radio
 ```
+
+### 方式三：从 VSIX 文件安装
+
+1. 从 [GitHub Releases](https://github.com/Echo-Denia/vscode-music-radio/releases) 下载 `.vsix` 文件
+2. 打开 VSCode，进入扩展面板（`Ctrl+Shift+X`）
+3. 点击扩展面板右上角的 "..." 菜单，选择 "从 VSIX 安装..."
+4. 选择下载的 `.vsix` 文件
 
 ## 使用方法
 
@@ -45,7 +56,7 @@ code --install-extension vscode-music-radio-0.1.0.vsix
 
 ### 3. 控制播放
 
-使用命令面板（Ctrl+Shift+P）输入以下命令：
+使用命令面板（`Ctrl+Shift+P`）输入以下命令：
 
 - `Music Radio: Open Player` - 打开播放器
 - `Music Radio: Play/Pause` - 播放/暂停
@@ -67,7 +78,7 @@ code --install-extension vscode-music-radio-0.1.0.vsix
 
 ## 配置项
 
-> ⚠️ **重要提示**：播放音乐时请勿关闭播放器的标签页，因为音频播放元素（radio元素）位于该标签页中，关闭标签页会导致播放停止。
+> ⚠️ **重要提示**：播放音乐时请勿关闭播放器的标签页，因为音频播放元素（radio 元素）位于该标签页中，关闭标签页会导致播放停止。
 
 在 VSCode 设置中搜索 "Music Radio" 可以配置以下选项：
 
@@ -117,8 +128,8 @@ npx vsce package
 
 ## 许可证
 
-MIT License
+[MIT License](LICENSE)
 
 ## 问题反馈
 
-如有问题或建议，请提交 Issue。
+如有问题或建议，请在 [GitHub Issues](https://github.com/Echo-Denia/vscode-music-radio/issues) 提交。
