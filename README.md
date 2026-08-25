@@ -1,6 +1,6 @@
 <!-- @format -->
 
-# Music Radio - VSCode 音乐播放器
+# music-radio - VSCode 音乐播放器
 
 [![VSCode Marketplace](https://img.shields.io/visual-studio-marketplace/v/Echo-Denia.music-radio?label=VSCode%20Marketplace&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=Echo-Denia.music-radio)
 [![GitHub](https://img.shields.io/github/stars/Echo-Denia/music-radio?style=social&logo=github)](https://github.com/Echo-Denia/music-radio)
@@ -23,7 +23,7 @@
 ### 方式一：从 VSCode 扩展市场安装（推荐）
 
 1. 打开 VSCode，进入扩展面板（`Ctrl+Shift+X`）
-2. 搜索 **Music Radio**
+2. 搜索 **music-radio**
 3. 点击安装
 
 或直接访问 [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=Echo-Denia.music-radio) 页面安装。
@@ -45,7 +45,7 @@ code --install-extension Echo-Denia.music-radio
 
 ### 1. 添加音乐文件夹
 
-- 点击左侧活动栏的 Music Radio 图标
+- 点击左侧活动栏的 music-radio 图标
 - 在音乐库视图中点击 "添加文件夹" 按钮
 - 选择包含音乐文件的文件夹
 
@@ -80,7 +80,7 @@ code --install-extension Echo-Denia.music-radio
 
 > ⚠️ **重要提示**：播放音乐时请勿关闭播放器的标签页，因为音频播放元素（radio 元素）位于该标签页中，关闭标签页会导致播放停止。
 
-在 VSCode 设置中搜索 "Music Radio" 可以配置以下选项：
+在 VSCode 设置中搜索 "music-radio" 可以配置以下选项：
 
 - **Music Folders** - 音乐文件夹路径列表
 - **Volume** - 默认音量（0-100）

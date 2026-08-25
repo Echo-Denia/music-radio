@@ -1,6 +1,6 @@
 {
   "name": "music-radio",
-  "displayName": "Music Radio",
+  "displayName": "music-radio",
   "description": "A music player with real-time lyrics display for VSCode",
   "version": "0.1.0",
   "publisher": "Echo-Denia",
@@ -33,7 +33,7 @@
       "activitybar": [
         {
           "id": "music-radio",
-          "title": "Music Radio",
+          "title": "music-radio",
           "icon": "media/icon.svg"
         }
       ]
@@ -231,7 +231,7 @@
       ]
     },
     "configuration": {
-      "title": "Music Radio",
+      "title": "music-radio",
       "properties": {
         "music-radio.musicFolders": {
           "type": "array",
