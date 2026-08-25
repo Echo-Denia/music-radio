@@ -13,7 +13,7 @@ const tokenMap = new Map<string, string>();
 let playerManager: PlayerManager | null = null;
 
 function getPortFilePath(): string {
-    return path.join(os.tmpdir(), 'vscode-music-radio-port');
+    return path.join(os.tmpdir(), 'music-radio-port');
 }
 
 function writePortFile(port: number): void {
