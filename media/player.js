@@ -50,6 +50,400 @@
     const AUDIO_SEEK_THRESHOLD = 5;
     const TIME_REPORT_THRESHOLD = 5;
 
+    var audioCtx = null;
+    var sourceNode = null;
+    var analyserNode = null;
+    var eqBands = [];
+    var lowShelfFilter = null;
+    var highShelfFilter = null;
+    var highPassFilter = null;
+    var lowPassFilter = null;
+    var compressorNode = null;
+    var stereoPannerNode = null;
+    var preGainNode = null;
+    var postGainNode = null;
+    var audioPipelineConnected = false;
+
+    var EQ_BANDS_CONFIG = [
+        { freq: 31, label: '31', type: 'peaking' },
+        { freq: 62, label: '62', type: 'peaking' },
+        { freq: 125, label: '125', type: 'peaking' },
+        { freq: 250, label: '250', type: 'peaking' },
+        { freq: 500, label: '500', type: 'peaking' },
+        { freq: 1000, label: '1k', type: 'peaking' },
+        { freq: 2000, label: '2k', type: 'peaking' },
+        { freq: 4000, label: '4k', type: 'peaking' },
+        { freq: 8000, label: '8k', type: 'peaking' },
+        { freq: 16000, label: '16k', type: 'peaking' }
+    ];
+
+    var EQ_PRESETS = {
+        flat: { name: 'Flat', gains: [0,0,0,0,0,0,0,0,0,0], bass: 0, treble: 0, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        rock: { name: 'Rock', gains: [5,4,3,1,-1,0,2,4,5,4], bass: 3, treble: 2, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        pop: { name: 'Pop', gains: [-1,2,4,4,2,0,-1,1,2,2], bass: 1, treble: 1, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        jazz: { name: 'Jazz', gains: [3,2,1,2,-1,-1,0,2,3,3], bass: 1, treble: 2, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        classical: { name: 'Classical', gains: [4,3,2,1,-1,-1,0,2,3,4], bass: 0, treble: 2, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        hiphop: { name: 'Hip-Hop', gains: [6,5,4,2,0,0,1,2,3,3], bass: 5, treble: 0, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        vocal: { name: 'Vocal', gains: [-2,-1,0,3,5,5,3,1,0,-1], bass: -2, treble: 2, pan: 0, compressor: { enabled: true, threshold: -18, knee: 12, ratio: 4, attack: 0.003, release: 0.25 } },
+        bass: { name: 'Bass Boost', gains: [6,5,4,2,0,0,0,0,0,0], bass: 6, treble: 0, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        treble: { name: 'Treble Boost', gains: [0,0,0,0,0,1,3,5,6,6], bass: 0, treble: 5, pan: 0, compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 } },
+        electronic: { name: 'Electronic', gains: [5,4,2,0,-1,0,1,4,5,4], bass: 4, treble: 2, pan: 0, compressor: { enabled: true, threshold: -20, knee: 10, ratio: 6, attack: 0.002, release: 0.15 } }
+    };
+
+    var tunerState = {
+        enabled: false,
+        currentPreset: 'flat',
+        eqGains: [0,0,0,0,0,0,0,0,0,0],
+        bass: 0,
+        treble: 0,
+        pan: 0,
+        compressor: { enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 },
+        spectrumVisible: false
+    };
+    var tunerStateSynced = false;
+
+    var spectrumAnimId = null;
+
+    function initAudioPipeline() {
+        if (audioPipelineConnected) return;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            sourceNode = audioCtx.createMediaElementSource(audio);
+            analyserNode = audioCtx.createAnalyser();
+            analyserNode.fftSize = 2048;
+            analyserNode.smoothingTimeConstant = 0.8;
+
+            preGainNode = audioCtx.createGain();
+            preGainNode.gain.value = 1.0;
+
+            eqBands = EQ_BANDS_CONFIG.map(function (cfg) {
+                var filter = audioCtx.createBiquadFilter();
+                filter.type = cfg.type;
+                filter.frequency.value = cfg.freq;
+                filter.Q.value = 1.4;
+                filter.gain.value = 0;
+                return filter;
+            });
+
+            lowShelfFilter = audioCtx.createBiquadFilter();
+            lowShelfFilter.type = 'lowshelf';
+            lowShelfFilter.frequency.value = 200;
+            lowShelfFilter.gain.value = 0;
+
+            highShelfFilter = audioCtx.createBiquadFilter();
+            highShelfFilter.type = 'highshelf';
+            highShelfFilter.frequency.value = 6000;
+            highShelfFilter.gain.value = 0;
+
+            highPassFilter = audioCtx.createBiquadFilter();
+            highPassFilter.type = 'highpass';
+            highPassFilter.frequency.value = 0;
+            highPassFilter.Q.value = 0.7;
+
+            lowPassFilter = audioCtx.createBiquadFilter();
+            lowPassFilter.type = 'lowpass';
+            lowPassFilter.frequency.value = 22050;
+            lowPassFilter.Q.value = 0.7;
+
+            compressorNode = audioCtx.createDynamicsCompressor();
+            compressorNode.threshold.value = -24;
+            compressorNode.knee.value = 30;
+            compressorNode.ratio.value = 12;
+            compressorNode.attack.value = 0.003;
+            compressorNode.release.value = 0.25;
+
+            stereoPannerNode = audioCtx.createStereoPanner();
+            stereoPannerNode.pan.value = 0;
+
+            postGainNode = audioCtx.createGain();
+            postGainNode.gain.value = 1.0;
+
+            rebuildPipeline();
+            audioPipelineConnected = true;
+        } catch (e) {
+            console.error('Music Radio: Failed to init audio pipeline', e);
+        }
+    }
+
+    function rebuildPipeline() {
+        if (!sourceNode) return;
+        try {
+            sourceNode.disconnect();
+        } catch (e) {}
+
+        var chain = [sourceNode, preGainNode];
+        eqBands.forEach(function (band) { chain.push(band); });
+        chain.push(lowShelfFilter, highShelfFilter, highPassFilter, lowPassFilter);
+        if (tunerState.compressor.enabled) {
+            chain.push(compressorNode);
+        }
+        chain.push(stereoPannerNode, postGainNode, analyserNode, audioCtx.destination);
+
+        for (var i = 0; i < chain.length - 1; i++) {
+            try { chain[i].disconnect(); } catch (e) {}
+        }
+        for (var i = 0; i < chain.length - 1; i++) {
+            chain[i].connect(chain[i + 1]);
+        }
+    }
+
+    function applyTunerState() {
+        if (!audioPipelineConnected) return;
+
+        eqBands.forEach(function (band, i) {
+            band.gain.value = tunerState.eqGains[i];
+        });
+
+        lowShelfFilter.gain.value = tunerState.bass;
+        highShelfFilter.gain.value = tunerState.treble;
+        stereoPannerNode.pan.value = tunerState.pan;
+
+        if (tunerState.compressor.enabled) {
+            compressorNode.threshold.value = tunerState.compressor.threshold;
+            compressorNode.knee.value = tunerState.compressor.knee;
+            compressorNode.ratio.value = tunerState.compressor.ratio;
+            compressorNode.attack.value = tunerState.compressor.attack;
+            compressorNode.release.value = tunerState.compressor.release;
+        }
+
+        rebuildPipeline();
+        renderTunerUI();
+        drawEQCurve();
+    }
+
+    function applyPreset(presetName) {
+        var preset = EQ_PRESETS[presetName];
+        if (!preset) return;
+        tunerState.currentPreset = presetName;
+        tunerState.eqGains = preset.gains.slice();
+        tunerState.bass = preset.bass;
+        tunerState.treble = preset.treble;
+        tunerState.pan = preset.pan;
+        tunerState.compressor = Object.assign({}, preset.compressor);
+        applyTunerState();
+        vscode.postMessage({ command: 'saveTunerState', tunerState: tunerState });
+    }
+
+    function startSpectrumVisualization() {
+        if (!analyserNode || !tunerState.spectrumVisible) return;
+        var canvas = document.getElementById('spectrumCanvas');
+        if (!canvas) return;
+        var container = canvas.parentElement;
+        if (container) {
+            var rect = container.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                canvas.width = Math.round(rect.width * (window.devicePixelRatio || 1));
+                canvas.height = Math.round(rect.height * (window.devicePixelRatio || 1));
+            }
+        }
+        var ctx = canvas.getContext('2d');
+        var bufferLength = analyserNode.frequencyBinCount;
+        var dataArray = new Uint8Array(bufferLength);
+
+        function draw() {
+            if (!tunerState.spectrumVisible) return;
+            spectrumAnimId = requestAnimationFrame(draw);
+            analyserNode.getByteFrequencyData(dataArray);
+
+            var w = canvas.width;
+            var h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            var barCount = 64;
+            var step = Math.floor(bufferLength / barCount);
+            var barWidth = w / barCount;
+            var accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#007acc';
+
+            for (var i = 0; i < barCount; i++) {
+                var val = 0;
+                for (var j = 0; j < step; j++) {
+                    val += dataArray[i * step + j];
+                }
+                val = val / step;
+                var barHeight = (val / 255) * h;
+                var ratio = i / barCount;
+                ctx.fillStyle = accentColor;
+                ctx.globalAlpha = 0.4 + ratio * 0.6;
+                ctx.fillRect(i * barWidth + 1, h - barHeight, barWidth - 2, barHeight);
+            }
+            ctx.globalAlpha = 1;
+        }
+        draw();
+    }
+
+    function stopSpectrumVisualization() {
+        if (spectrumAnimId) {
+            cancelAnimationFrame(spectrumAnimId);
+            spectrumAnimId = null;
+        }
+        var canvas = document.getElementById('spectrumCanvas');
+        if (canvas) {
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    function drawEQCurve() {
+        var canvas = document.getElementById('eqCurveCanvas');
+        if (!canvas) return;
+        var container = canvas.parentElement;
+        if (container) {
+            var rect = container.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                canvas.width = Math.round(rect.width * (window.devicePixelRatio || 1));
+                canvas.height = Math.round(rect.height * (window.devicePixelRatio || 1));
+            }
+        }
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width;
+        var h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        var midY = h / 2;
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#333';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, midY);
+        ctx.lineTo(w, midY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#007acc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        var freqs = [];
+        for (var i = 0; i < w; i++) {
+            freqs.push(20 * Math.pow(1000, i / w));
+        }
+
+        for (var px = 0; px < w; px++) {
+            var freq = freqs[px];
+            var totalGain = 0;
+
+            for (var b = 0; b < eqBands.length; b++) {
+                var f0 = EQ_BANDS_CONFIG[b].freq;
+                var gain = tunerState.eqGains[b];
+                var Q = 1.4;
+                var x = (freq * freq - f0 * f0) / (freq * Q);
+                var denom = 1 + x * x;
+                var mag = Math.sqrt(1 + (gain / 20 * (2 + gain / 20)) * x * x / denom);
+                var dbGain = 20 * Math.log10(mag);
+                totalGain += dbGain;
+            }
+
+            if (freq <= 200) {
+                totalGain += tunerState.bass * (1 - freq / 200);
+            }
+            if (freq >= 6000) {
+                totalGain += tunerState.treble * ((freq - 6000) / (20000 - 6000));
+            }
+
+            var y = midY - (totalGain / 24) * midY;
+            y = Math.max(2, Math.min(h - 2, y));
+            if (px === 0) {
+                ctx.moveTo(px, y);
+            } else {
+                ctx.lineTo(px, y);
+            }
+        }
+        ctx.stroke();
+
+        var dotRadius = 4;
+        var accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#007acc';
+        for (var b = 0; b < EQ_BANDS_CONFIG.length; b++) {
+            var f0 = EQ_BANDS_CONFIG[b].freq;
+            var logPos = Math.log10(f0 / 20) / Math.log10(1000);
+            var px = logPos * w;
+            var gain = tunerState.eqGains[b];
+            var y = midY - (gain / 24) * midY;
+            y = Math.max(2, Math.min(h - 2, y));
+            ctx.fillStyle = accentColor;
+            ctx.beginPath();
+            ctx.arc(px, y, dotRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary').trim() || '#1e1e1e';
+            ctx.beginPath();
+            ctx.arc(px, y, dotRadius - 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function renderTunerUI() {
+        var panel = document.getElementById('tunerPanel');
+        if (!panel) return;
+
+        var presetSelect = document.getElementById('eqPresetSelect');
+        if (presetSelect) presetSelect.value = tunerState.currentPreset;
+
+        var sliders = panel.querySelectorAll('.eq-slider');
+        sliders.forEach(function (slider, i) {
+            if (i < tunerState.eqGains.length) {
+                slider.value = tunerState.eqGains[i];
+                var valEl = slider.parentElement.querySelector('.eq-value');
+                if (valEl) {
+                    var v = tunerState.eqGains[i];
+                    valEl.textContent = (v > 0 ? '+' : '') + v + ' dB';
+                }
+            }
+        });
+
+        var bassSlider = document.getElementById('bassSlider');
+        if (bassSlider) {
+            bassSlider.value = tunerState.bass;
+            var bassVal = document.getElementById('bassValue');
+            if (bassVal) bassVal.textContent = (tunerState.bass > 0 ? '+' : '') + tunerState.bass + ' dB';
+        }
+
+        var trebleSlider = document.getElementById('trebleSlider');
+        if (trebleSlider) {
+            trebleSlider.value = tunerState.treble;
+            var trebleVal = document.getElementById('trebleValue');
+            if (trebleVal) trebleVal.textContent = (tunerState.treble > 0 ? '+' : '') + tunerState.treble + ' dB';
+        }
+
+        var panSlider = document.getElementById('panSlider');
+        if (panSlider) {
+            panSlider.value = tunerState.pan;
+            var panVal = document.getElementById('panValue');
+            if (panVal) {
+                if (tunerState.pan === 0) panVal.textContent = 'C';
+                else if (tunerState.pan < 0) panVal.textContent = 'L ' + Math.abs(Math.round(tunerState.pan * 100)) + '%';
+                else panVal.textContent = 'R ' + Math.round(tunerState.pan * 100) + '%';
+            }
+        }
+
+        var compToggle = document.getElementById('compressorToggle');
+        if (compToggle) compToggle.checked = tunerState.compressor.enabled;
+
+        var compPanel = document.getElementById('compressorPanel');
+        if (compPanel) compPanel.style.display = tunerState.compressor.enabled ? 'block' : 'none';
+
+        if (tunerState.compressor.enabled) {
+            var compSliders = {
+                compThreshold: { el: document.getElementById('compThreshold'), val: document.getElementById('compThresholdVal'), fmt: function(v) { return v + ' dB'; } },
+                compKnee: { el: document.getElementById('compKnee'), val: document.getElementById('compKneeVal'), fmt: function(v) { return v + ' dB'; } },
+                compRatio: { el: document.getElementById('compRatio'), val: document.getElementById('compRatioVal'), fmt: function(v) { return v + ':1'; } },
+                compAttack: { el: document.getElementById('compAttack'), val: document.getElementById('compAttackVal'), fmt: function(v) { return (v * 1000).toFixed(1) + ' ms'; } },
+                compRelease: { el: document.getElementById('compRelease'), val: document.getElementById('compReleaseVal'), fmt: function(v) { return (v * 1000).toFixed(0) + ' ms'; } }
+            };
+            if (compSliders.compThreshold.el) compSliders.compThreshold.el.value = tunerState.compressor.threshold;
+            if (compSliders.compThreshold.val) compSliders.compThreshold.val.textContent = compSliders.compThreshold.fmt(tunerState.compressor.threshold);
+            if (compSliders.compKnee.el) compSliders.compKnee.el.value = tunerState.compressor.knee;
+            if (compSliders.compKnee.val) compSliders.compKnee.val.textContent = compSliders.compKnee.fmt(tunerState.compressor.knee);
+            if (compSliders.compRatio.el) compSliders.compRatio.el.value = tunerState.compressor.ratio;
+            if (compSliders.compRatio.val) compSliders.compRatio.val.textContent = compSliders.compRatio.fmt(tunerState.compressor.ratio);
+            if (compSliders.compAttack.el) compSliders.compAttack.el.value = tunerState.compressor.attack;
+            if (compSliders.compAttack.val) compSliders.compAttack.val.textContent = compSliders.compAttack.fmt(tunerState.compressor.attack);
+            if (compSliders.compRelease.el) compSliders.compRelease.el.value = tunerState.compressor.release;
+            if (compSliders.compRelease.val) compSliders.compRelease.val.textContent = compSliders.compRelease.fmt(tunerState.compressor.release);
+        }
+    }
+
     const playBtn = document.getElementById('playBtn');
     const playIcon = document.getElementById('playIcon');
     const pauseIcon = document.getElementById('pauseIcon');
@@ -1206,6 +1600,9 @@
 
     playBtn.addEventListener('click', function () {
         audioJustEnded = false;
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
         if (audio.paused && lastAudioUrl && !state.isPlaying) {
             userInitiatedPlay = true;
             startAudioPlayback();
@@ -1244,6 +1641,192 @@
     reloadExtensionBtn.addEventListener('click', function () {
         vscode.postMessage({ command: 'reloadExtension' });
     });
+
+    var tunerToggleBtn = document.getElementById('tunerToggleBtn');
+    if (tunerToggleBtn) {
+        tunerToggleBtn.addEventListener('click', function () {
+            var panel = document.getElementById('tunerPanel');
+            if (!panel) return;
+            tunerState.enabled = !tunerState.enabled;
+            panel.style.display = tunerState.enabled ? 'flex' : 'none';
+            tunerToggleBtn.classList.toggle('active', tunerState.enabled);
+            if (tunerState.enabled) {
+                if (!audioPipelineConnected) {
+                    initAudioPipeline();
+                    if (audioPipelineConnected) {
+                        applyTunerState();
+                    }
+                }
+                drawEQCurve();
+                if (tunerState.spectrumVisible) {
+                    startSpectrumVisualization();
+                }
+            }
+        });
+    }
+
+    var eqPresetSelect = document.getElementById('eqPresetSelect');
+    if (eqPresetSelect) {
+        eqPresetSelect.addEventListener('change', function () {
+            if (!audioPipelineConnected) {
+                initAudioPipeline();
+            }
+            applyPreset(eqPresetSelect.value);
+        });
+    }
+
+    document.querySelectorAll('.eq-slider').forEach(function (slider, i) {
+        slider.addEventListener('input', function () {
+            if (!audioPipelineConnected) {
+                initAudioPipeline();
+            }
+            tunerState.eqGains[i] = parseInt(slider.value, 10);
+            var valEl = slider.parentElement.querySelector('.eq-value');
+            if (valEl) {
+                var v = tunerState.eqGains[i];
+                valEl.textContent = (v > 0 ? '+' : '') + v + ' dB';
+            }
+            if (audioPipelineConnected) {
+                eqBands[i].gain.value = tunerState.eqGains[i];
+            }
+            drawEQCurve();
+        });
+        slider.addEventListener('change', function () {
+            tunerState.currentPreset = 'custom';
+            var presetSelect = document.getElementById('eqPresetSelect');
+            if (presetSelect) presetSelect.value = 'custom';
+            vscode.postMessage({ command: 'saveTunerState', tunerState: tunerState });
+        });
+    });
+
+    var bassSlider = document.getElementById('bassSlider');
+    if (bassSlider) {
+        bassSlider.addEventListener('input', function () {
+            if (!audioPipelineConnected) { initAudioPipeline(); }
+            tunerState.bass = parseInt(bassSlider.value, 10);
+            var bassVal = document.getElementById('bassValue');
+            if (bassVal) bassVal.textContent = (tunerState.bass > 0 ? '+' : '') + tunerState.bass + ' dB';
+            if (audioPipelineConnected) lowShelfFilter.gain.value = tunerState.bass;
+            drawEQCurve();
+        });
+        bassSlider.addEventListener('change', function () {
+            tunerState.currentPreset = 'custom';
+            var ps = document.getElementById('eqPresetSelect');
+            if (ps) ps.value = 'custom';
+            vscode.postMessage({ command: 'saveTunerState', tunerState: tunerState });
+        });
+    }
+
+    var trebleSlider = document.getElementById('trebleSlider');
+    if (trebleSlider) {
+        trebleSlider.addEventListener('input', function () {
+            if (!audioPipelineConnected) { initAudioPipeline(); }
+            tunerState.treble = parseInt(trebleSlider.value, 10);
+            var trebleVal = document.getElementById('trebleValue');
+            if (trebleVal) trebleVal.textContent = (tunerState.treble > 0 ? '+' : '') + tunerState.treble + ' dB';
+            if (audioPipelineConnected) highShelfFilter.gain.value = tunerState.treble;
+            drawEQCurve();
+        });
+        trebleSlider.addEventListener('change', function () {
+            tunerState.currentPreset = 'custom';
+            var ps = document.getElementById('eqPresetSelect');
+            if (ps) ps.value = 'custom';
+            vscode.postMessage({ command: 'saveTunerState', tunerState: tunerState });
+        });
+    }
+
+    var panSlider = document.getElementById('panSlider');
+    if (panSlider) {
+        panSlider.addEventListener('input', function () {
+            if (!audioPipelineConnected) { initAudioPipeline(); }
+            tunerState.pan = parseFloat(panSlider.value);
+            var panVal = document.getElementById('panValue');
+            if (panVal) {
+                if (tunerState.pan === 0) panVal.textContent = 'C';
+                else if (tunerState.pan < 0) panVal.textContent = 'L ' + Math.abs(Math.round(tunerState.pan * 100)) + '%';
+                else panVal.textContent = 'R ' + Math.round(tunerState.pan * 100) + '%';
+            }
+            if (audioPipelineConnected) stereoPannerNode.pan.value = tunerState.pan;
+        });
+        panSlider.addEventListener('change', function () {
+            vscode.postMessage({ command: 'saveTunerState', tunerState: tunerState });
+        });
+    }
+
+    var compressorToggle = document.getElementById('compressorToggle');
+    if (compressorToggle) {
+        compressorToggle.addEventListener('change', function () {
+            if (!audioPipelineConnected) { initAudioPipeline(); }
+            tunerState.compressor.enabled = compressorToggle.checked;
+            var compPanel = document.getElementById('compressorPanel');
+            if (compPanel) compPanel.style.display = tunerState.compressor.enabled ? 'block' : 'none';
+            if (audioPipelineConnected) {
+                rebuildPipeline();
+            }
+            vscode.postMessage({ command: 'saveTunerState', tunerState: tunerState });
+        });
+    }
+
+    ['compThreshold', 'compKnee', 'compRatio', 'compAttack', 'compRelease'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', function () {
+            if (!audioPipelineConnected) { initAudioPipeline(); }
+            var val = parseFloat(el.value);
+            switch (id) {
+                case 'compThreshold': tunerState.compressor.threshold = val; break;
+                case 'compKnee': tunerState.compressor.knee = val; break;
+                case 'compRatio': tunerState.compressor.ratio = val; break;
+                case 'compAttack': tunerState.compressor.attack = val; break;
+                case 'compRelease': tunerState.compressor.release = val; break;
+            }
+            if (audioPipelineConnected && tunerState.compressor.enabled) {
+                switch (id) {
+                    case 'compThreshold': compressorNode.threshold.value = val; break;
+                    case 'compKnee': compressorNode.knee.value = val; break;
+                    case 'compRatio': compressorNode.ratio.value = val; break;
+                    case 'compAttack': compressorNode.attack.value = val; break;
+                    case 'compRelease': compressorNode.release.value = val; break;
+                }
+            }
+            var valEl = document.getElementById(id + 'Val');
+            if (valEl) {
+                switch (id) {
+                    case 'compThreshold': valEl.textContent = val + ' dB'; break;
+                    case 'compKnee': valEl.textContent = val + ' dB'; break;
+                    case 'compRatio': valEl.textContent = val + ':1'; break;
+                    case 'compAttack': valEl.textContent = (val * 1000).toFixed(1) + ' ms'; break;
+                    case 'compRelease': valEl.textContent = (val * 1000).toFixed(0) + ' ms'; break;
+                }
+            }
+        });
+        el.addEventListener('change', function () {
+            vscode.postMessage({ command: 'saveTunerState', tunerState: tunerState });
+        });
+    });
+
+    var spectrumToggle = document.getElementById('spectrumToggle');
+    if (spectrumToggle) {
+        spectrumToggle.addEventListener('click', function () {
+            if (!audioPipelineConnected) { initAudioPipeline(); }
+            tunerState.spectrumVisible = !tunerState.spectrumVisible;
+            spectrumToggle.classList.toggle('active', tunerState.spectrumVisible);
+            var canvas = document.getElementById('spectrumCanvas');
+            if (canvas) canvas.style.display = tunerState.spectrumVisible ? 'block' : 'none';
+            if (tunerState.spectrumVisible) {
+                startSpectrumVisualization();
+            } else {
+                stopSpectrumVisualization();
+            }
+        });
+    }
+
+    var eqResetBtn = document.getElementById('eqResetBtn');
+    if (eqResetBtn) {
+        eqResetBtn.addEventListener('click', function () {
+            applyPreset('flat');
+        });
+    }
 
     searchInput.addEventListener('input', function () {
         searchQuery = searchInput.value;
@@ -1399,6 +1982,23 @@
         const oldAudioUrl = state.audioUrl;
         state = message.state;
         syncServerClock(state);
+
+        if (state.tunerState && !tunerStateSynced) {
+            var saved = state.tunerState;
+            tunerState.currentPreset = saved.currentPreset || 'flat';
+            tunerState.eqGains = saved.eqGains ? saved.eqGains.slice() : [0,0,0,0,0,0,0,0,0,0];
+            tunerState.bass = saved.bass || 0;
+            tunerState.treble = saved.treble || 0;
+            tunerState.pan = saved.pan || 0;
+            if (saved.compressor) {
+                tunerState.compressor = Object.assign({}, tunerState.compressor, saved.compressor);
+            }
+            tunerStateSynced = true;
+            if (audioPipelineConnected) {
+                applyTunerState();
+            }
+            renderTunerUI();
+        }
 
         if (sortField === 'random' && state.playlist) {
             state.playlist.forEach(function (track) {

@@ -61,6 +61,7 @@ export class PlayerManager {
     private _lastTrackEndTime = 0;
     private _trackGeneration = 0;
     private _actualDuration = 0;
+    private _tunerState: any = null;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
@@ -70,6 +71,7 @@ export class PlayerManager {
         this.repeat = config.get<RepeatMode>('repeat', 'none');
         this.supportedFormats = config.get<string[]>('supportedFormats', ['mp3', 'flac', 'wav', 'ogg', 'm4a', 'aac', 'wma', 'opus']);
         this.musicFolders = config.get<string[]>('musicFolders', []);
+        this._tunerState = context.globalState.get('tunerState', null);
         this._startSaveTimer();
     }
 
@@ -555,7 +557,20 @@ export class PlayerManager {
             serverPlayStartOffset: this._serverPlayStartOffset,
             isBackgroundPaused: this._isBackgroundPaused,
             trackGeneration: this._trackGeneration,
+            tunerState: this._tunerState,
         };
+    }
+
+    saveTunerState(tunerState: any): void {
+        this._tunerState = tunerState;
+        this.context.globalState.update('tunerState', tunerState);
+    }
+
+    loadTunerState(): any {
+        if (!this._tunerState) {
+            this._tunerState = this.context.globalState.get('tunerState', null);
+        }
+        return this._tunerState;
     }
 
     private _startTrackEndTimer(): void {

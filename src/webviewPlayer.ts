@@ -259,6 +259,12 @@ export class PlayerWebviewPanel {
                 vscode.commands.executeCommand('music-radio.reload');
                 break;
             }
+            case 'saveTunerState': {
+                if (message.tunerState) {
+                    this.playerManager.saveTunerState(message.tunerState);
+                }
+                break;
+            }
         }
     }
 
@@ -391,6 +397,123 @@ export class PlayerWebviewPanel {
                 <span id="volumeValue">80%</span>
             </div>
 
+            <button class="tuner-toggle-btn" id="tunerToggleBtn" title="Audio Tuner">
+                <svg viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+                <span>Tuner</span>
+            </button>
+
+            <div class="tuner-panel" id="tunerPanel">
+                <div class="tuner-section">
+                    <div class="tuner-section-header">
+                        <span>Equalizer</span>
+                        <div class="tuner-section-actions">
+                            <button id="eqResetBtn" title="Reset EQ">
+                                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.81 2.55-2.98 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/></svg>
+                                Reset
+                            </button>
+                            <button id="spectrumToggle" title="Spectrum Analyzer">
+                                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10zM7 10h2v4H7zm4-2h2v6h-2zm4 1h2v4h-2z" fill="currentColor"/></svg>
+                                Spectrum
+                            </button>
+                        </div>
+                    </div>
+                    <div class="eq-preset-row">
+                        <select id="eqPresetSelect">
+                            <option value="flat">Flat</option>
+                            <option value="rock">Rock</option>
+                            <option value="pop">Pop</option>
+                            <option value="jazz">Jazz</option>
+                            <option value="classical">Classical</option>
+                            <option value="hiphop">Hip-Hop</option>
+                            <option value="vocal">Vocal</option>
+                            <option value="bass">Bass Boost</option>
+                            <option value="treble">Treble Boost</option>
+                            <option value="electronic">Electronic</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="eq-curve-container">
+                        <canvas id="eqCurveCanvas" width="300" height="60"></canvas>
+                    </div>
+                    <div class="eq-bands">
+                        <div class="eq-band"><span class="eq-label">31</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">62</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">125</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">250</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">500</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">1k</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">2k</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">4k</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">8k</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                        <div class="eq-band"><span class="eq-label">16k</span><input type="range" class="eq-slider" min="-12" max="12" value="0" step="1"><span class="eq-value">0 dB</span></div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Tone</span></div>
+                    <div class="tuner-slider-row">
+                        <label>Bass</label>
+                        <input type="range" id="bassSlider" min="-12" max="12" value="0" step="1">
+                        <span class="tuner-slider-value" id="bassValue">0 dB</span>
+                    </div>
+                    <div class="tuner-slider-row">
+                        <label>Treble</label>
+                        <input type="range" id="trebleSlider" min="-12" max="12" value="0" step="1">
+                        <span class="tuner-slider-value" id="trebleValue">0 dB</span>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Stereo</span></div>
+                    <div class="tuner-slider-row">
+                        <label>Pan</label>
+                        <input type="range" id="panSlider" min="-1" max="1" value="0" step="0.01">
+                        <span class="tuner-slider-value" id="panValue">C</span>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Compressor</span></div>
+                    <div class="compressor-toggle-row">
+                        <input type="checkbox" id="compressorToggle">
+                        <label for="compressorToggle">Enable Compressor</label>
+                    </div>
+                    <div class="compressor-panel" id="compressorPanel">
+                        <div class="tuner-slider-row">
+                            <label>Threshold</label>
+                            <input type="range" id="compThreshold" min="-60" max="0" value="-24" step="1">
+                            <span class="tuner-slider-value" id="compThresholdVal">-24 dB</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Knee</label>
+                            <input type="range" id="compKnee" min="0" max="40" value="30" step="1">
+                            <span class="tuner-slider-value" id="compKneeVal">30 dB</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Ratio</label>
+                            <input type="range" id="compRatio" min="1" max="20" value="12" step="1">
+                            <span class="tuner-slider-value" id="compRatioVal">12:1</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Attack</label>
+                            <input type="range" id="compAttack" min="0" max="1" value="0.003" step="0.001">
+                            <span class="tuner-slider-value" id="compAttackVal">3.0 ms</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Release</label>
+                            <input type="range" id="compRelease" min="0.01" max="1" value="0.25" step="0.01">
+                            <span class="tuner-slider-value" id="compReleaseVal">250 ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="spectrum-container" style="display:none">
+                        <canvas id="spectrumCanvas" width="300" height="48"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div class="player-lyrics" id="playerLyrics">
                 <div class="player-lyrics-header">
                     <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
@@ -458,7 +581,7 @@ export class PlayerWebviewPanel {
         </div>
     </div>
 
-    <audio id="audioPlayer" preload="auto" style="display:none"></audio>
+    <audio id="audioPlayer" preload="auto" crossorigin="anonymous" style="display:none"></audio>
 
     <script nonce="${nonce}">
         const initialState = ${stateJson};

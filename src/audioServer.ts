@@ -81,6 +81,17 @@ export function startServer(): Promise<number> {
 
                 const url = new URL(req.url, `http://localhost:${serverPort}`);
 
+                if (req.method === 'OPTIONS') {
+                    res.writeHead(204, {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Range, Content-Type',
+                        'Access-Control-Max-Age': '86400',
+                    });
+                    res.end();
+                    return;
+                }
+
                 if (url.pathname === '/api/ping') {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ ok: true }));
@@ -137,6 +148,7 @@ export function startServer(): Promise<number> {
                         'Content-Length': chunkSize,
                         'Content-Type': contentType,
                         'Cache-Control': 'no-cache',
+                        'Access-Control-Allow-Origin': '*',
                     });
 
                     const stream = fs.createReadStream(filePath, { start, end });
@@ -147,6 +159,7 @@ export function startServer(): Promise<number> {
                         'Content-Type': contentType,
                         'Accept-Ranges': 'bytes',
                         'Cache-Control': 'no-cache',
+                        'Access-Control-Allow-Origin': '*',
                     });
 
                     const stream = fs.createReadStream(filePath);

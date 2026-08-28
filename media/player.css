@@ -825,3 +825,257 @@ body {
   background: var(--vscode-menu-separatorBackground, var(--border));
   margin: 4px 0;
 }
+
+.tuner-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-family: var(--vscode-font-family);
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.tuner-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.tuner-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tuner-toggle-btn.active {
+  color: var(--accent);
+}
+
+.tuner-panel {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 400px;
+}
+
+.tuner-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tuner-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tuner-section-header .tuner-section-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.tuner-section-actions button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: var(--vscode-font-family);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tuner-section-actions button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tuner-section-actions button.active {
+  color: var(--accent);
+}
+
+.eq-preset-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eq-preset-row select {
+  flex: 1;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-family: var(--vscode-font-family);
+  cursor: pointer;
+  outline: none;
+}
+
+.eq-preset-row select:focus {
+  border-color: var(--accent);
+}
+
+.eq-curve-container {
+  width: 100%;
+  height: 60px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.eq-curve-container canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.eq-bands {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 0 2px;
+}
+
+.eq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.eq-band .eq-label {
+  font-size: 9px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.eq-band .eq-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 20px;
+  height: 80px;
+  -webkit-appearance: slider-vertical;
+  appearance: auto;
+  background: transparent;
+  cursor: pointer;
+}
+
+.eq-band .eq-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.eq-band .eq-slider::-webkit-slider-runnable-track {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.eq-band .eq-value {
+  font-size: 8px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tuner-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tuner-slider-row label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 48px;
+  flex-shrink: 0;
+}
+
+.tuner-slider-row input[type="range"] {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.tuner-slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.tuner-slider-row .tuner-slider-value {
+  font-size: 10px;
+  color: var(--text-secondary);
+  min-width: 48px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.compressor-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.compressor-toggle-row input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.compressor-panel {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 12px;
+}
+
+.spectrum-container {
+  width: 100%;
+  height: 48px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.spectrum-container canvas {
+  width: 100%;
+  height: 100%;
+}
