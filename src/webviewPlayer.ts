@@ -415,6 +415,10 @@ export class PlayerWebviewPanel {
                                 <svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10zM7 10h2v4H7zm4-2h2v6h-2zm4 1h2v4h-2z" fill="currentColor"/></svg>
                                 Spectrum
                             </button>
+                            <button id="oscilloscopeToggle" title="Oscilloscope">
+                                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 12h2v4H7zm4-3h2v7h-2zm4-2h2v9h-2z" fill="currentColor"/></svg>
+                                Wave
+                            </button>
                         </div>
                     </div>
                     <div class="eq-preset-row">
@@ -491,7 +495,7 @@ export class PlayerWebviewPanel {
                         </div>
                         <div class="tuner-slider-row">
                             <label>Ratio</label>
-                            <input type="range" id="compRatio" min="1" max="20" value="12" step="1">
+                            <input type="range" id="compRatio" min="1" max="20" value="12" step="0.5">
                             <span class="tuner-slider-value" id="compRatioVal">12:1</span>
                         </div>
                         <div class="tuner-slider-row">
@@ -508,8 +512,131 @@ export class PlayerWebviewPanel {
                 </div>
 
                 <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Limiter</span></div>
+                    <div class="compressor-toggle-row">
+                        <input type="checkbox" id="limiterToggle">
+                        <label for="limiterToggle">Enable Limiter</label>
+                    </div>
+                    <div class="compressor-panel" id="limiterPanel">
+                        <div class="tuner-slider-row">
+                            <label>Threshold</label>
+                            <input type="range" id="limThreshold" min="-12" max="0" value="-1" step="0.5">
+                            <span class="tuner-slider-value" id="limThresholdVal">-1 dB</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Release</label>
+                            <input type="range" id="limRelease" min="0.01" max="0.5" value="0.05" step="0.01">
+                            <span class="tuner-slider-value" id="limReleaseVal">50 ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Reverb</span></div>
+                    <div class="compressor-toggle-row">
+                        <input type="checkbox" id="reverbToggle">
+                        <label for="reverbToggle">Enable Reverb</label>
+                    </div>
+                    <div class="compressor-panel" id="reverbPanel">
+                        <div class="tuner-slider-row">
+                            <label>Mix</label>
+                            <input type="range" id="revMix" min="0" max="1" value="0.3" step="0.01">
+                            <span class="tuner-slider-value" id="revMixVal">30%</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Decay</label>
+                            <input type="range" id="revDecay" min="0.5" max="8" value="2.0" step="0.1">
+                            <span class="tuner-slider-value" id="revDecayVal">2.0 s</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Pre-Delay</label>
+                            <input type="range" id="revPreDelay" min="0" max="0.1" value="0.01" step="0.001">
+                            <span class="tuner-slider-value" id="revPreDelayVal">10 ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Delay</span></div>
+                    <div class="compressor-toggle-row">
+                        <input type="checkbox" id="delayToggle">
+                        <label for="delayToggle">Enable Delay</label>
+                    </div>
+                    <div class="compressor-panel" id="delayPanel">
+                        <div class="tuner-slider-row">
+                            <label>Time</label>
+                            <input type="range" id="delTime" min="0.05" max="2" value="0.3" step="0.01">
+                            <span class="tuner-slider-value" id="delTimeVal">300 ms</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Feedback</label>
+                            <input type="range" id="delFeedback" min="0" max="0.9" value="0.3" step="0.01">
+                            <span class="tuner-slider-value" id="delFeedbackVal">30%</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Mix</label>
+                            <input type="range" id="delMix" min="0" max="1" value="0.25" step="0.01">
+                            <span class="tuner-slider-value" id="delMixVal">25%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Crossfeed</span></div>
+                    <div class="compressor-toggle-row">
+                        <input type="checkbox" id="crossfeedToggle">
+                        <label for="crossfeedToggle">Enable Crossfeed</label>
+                    </div>
+                    <div class="compressor-panel" id="crossfeedPanel">
+                        <div class="tuner-slider-row">
+                            <label>Level</label>
+                            <input type="range" id="cfLevel" min="0" max="0.8" value="0.3" step="0.01">
+                            <span class="tuner-slider-value" id="cfLevelVal">30%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Stereo Widen</span></div>
+                    <div class="compressor-toggle-row">
+                        <input type="checkbox" id="stereoWidenToggle">
+                        <label for="stereoWidenToggle">Enable Stereo Widen</label>
+                    </div>
+                    <div class="compressor-panel" id="stereoWidenPanel">
+                        <div class="tuner-slider-row">
+                            <label>Width</label>
+                            <input type="range" id="swWidth" min="1" max="3" value="1.3" step="0.1">
+                            <span class="tuner-slider-value" id="swWidthVal">1.3x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
+                    <div class="tuner-section-header"><span>Tremolo</span></div>
+                    <div class="compressor-toggle-row">
+                        <input type="checkbox" id="tremoloToggle">
+                        <label for="tremoloToggle">Enable Tremolo</label>
+                    </div>
+                    <div class="compressor-panel" id="tremoloPanel">
+                        <div class="tuner-slider-row">
+                            <label>Rate</label>
+                            <input type="range" id="tremRate" min="0.5" max="20" value="4.0" step="0.1">
+                            <span class="tuner-slider-value" id="tremRateVal">4.0 Hz</span>
+                        </div>
+                        <div class="tuner-slider-row">
+                            <label>Depth</label>
+                            <input type="range" id="tremDepth" min="0" max="1" value="0.5" step="0.01">
+                            <span class="tuner-slider-value" id="tremDepthVal">50%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tuner-section">
                     <div class="spectrum-container" style="display:none">
                         <canvas id="spectrumCanvas" width="300" height="48"></canvas>
+                    </div>
+                    <div class="spectrum-container" style="display:none">
+                        <canvas id="oscilloscopeCanvas" width="300" height="48"></canvas>
                     </div>
                 </div>
             </div>

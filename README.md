@@ -17,7 +17,18 @@
 - 🔍 **音乐搜索** - 快速搜索音乐库中的歌曲
 - 🎛️ **播放控制** - 播放/暂停、上一首/下一首、音量调节，支持在底边栏控制播放情况，便于摸鱼
 - 📋 **播放列表** - 支持播放下一首、移除歌曲、清空列表
-- **Tuner面板** - 支持EQ调节，预设10种EQ
+- 🎛️ **Tuner 面板** - 模块化音频效果器系统，支持可插拔效果器链：
+  - **Equalizer** - 10 段参数均衡器，11 种预设（Flat/Rock/Pop/Jazz/Classical/Hip-Hop/Vocal/Bass Boost/Treble Boost/Electronic/Custom）
+  - **Tone** - Bass/Treble 音调控制
+  - **Compressor** - 动态压缩器（Threshold/Knee/Ratio/Attack/Release）
+  - **Limiter** - 限幅器（Threshold/Release），防止削波失真
+  - **Reverb** - 卷积混响（Mix/Decay/Pre-Delay），模拟空间混响效果
+  - **Delay** - 反馈延迟线（Time/Feedback/Mix），回声效果
+  - **Crossfeed** - 交叉馈送（Level），耳机听感优化，模拟音箱串音
+  - **Stereo Widen** - 立体声展宽（Width），增强声场宽度
+  - **Tremolo** - 颤音效果（Rate/Depth），音量周期性调制
+  - **Pan** - 声像控制（L/R 平衡）
+  - **频谱分析器** - 实时频谱可视化
 
 ## 安装方式
 

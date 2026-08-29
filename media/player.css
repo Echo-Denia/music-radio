@@ -867,7 +867,7 @@ body {
   margin-top: 4px;
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: 400px;
+  max-height: calc(100vh - 280px);
 }
 
 .tuner-section {
