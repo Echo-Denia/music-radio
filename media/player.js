@@ -23,6 +23,7 @@
     let userInitiatedPlay = false;
     let isInternalPause = false;
     let isBackgroundPaused = false;
+    let isResumingFromBackground = false;
 
     let lyricsActiveLineIndex = -1;
     let currentLyrics = null;
@@ -1345,8 +1346,21 @@
         needsUserGesture = false;
         isBackgroundPaused = false;
         if (audio.duration && isFinite(audio.currentTime)) {
-            serverPlayStartTime = getServerNow();
-            serverPlayStartOffset = audio.currentTime;
+            if (isResumingFromBackground) {
+                isResumingFromBackground = false;
+                var targetTime = serverPlayStartOffset + (getServerNow() - serverPlayStartTime) / 1000;
+                if (audio.duration && targetTime > audio.duration) {
+                    targetTime = audio.duration - 0.5;
+                }
+                targetTime = Math.max(0, targetTime);
+                var drift = targetTime - audio.currentTime;
+                if (drift > 1) {
+                    audio.currentTime = targetTime;
+                }
+            } else {
+                serverPlayStartTime = getServerNow();
+                serverPlayStartOffset = audio.currentTime;
+            }
         }
     });
 
@@ -1455,6 +1469,7 @@
 
             if (isBackgroundPaused && state.isPlaying) {
                 isBackgroundPaused = false;
+                isResumingFromBackground = true;
                 vscode.postMessage({ command: 'backgroundResume', time: estimated });
             }
             if (state.isPlaying) {
@@ -1462,6 +1477,12 @@
                 serverPlayStartOffset = estimated;
             }
             resumePlaybackIfNeeded();
+
+            setTimeout(function () {
+                if (isResumingFromBackground) {
+                    isResumingFromBackground = false;
+                }
+            }, 2000);
 
             setTimeout(function () {
                 var est = getEstimatedTime();
@@ -2587,6 +2608,14 @@
         } else if (message.command === 'panelBecameVisible') {
             if (stateUpdateTimer) { clearTimeout(stateUpdateTimer); stateUpdateTimer = null; }
             if (pendingStateUpdate) { applyState(pendingStateUpdate); pendingStateUpdate = null; }
+            if (state.isPlaying && audio.paused) {
+                isResumingFromBackground = true;
+                setTimeout(function () {
+                    if (isResumingFromBackground) {
+                        isResumingFromBackground = false;
+                    }
+                }, 2000);
+            }
             setTimeout(function () {
                 resumePlaybackIfNeeded();
                 var pbvEst = getEstimatedTime();
@@ -2657,9 +2686,15 @@
             if (state.audioUrl && state.audioUrl !== lastAudioUrl) {
                 loadAudio(state.audioUrl, state.isPlaying);
             } else if (state.isPlaying && audio.paused) {
+                isResumingFromBackground = true;
                 needsUserGesture = false;
                 if (audio.readyState >= 2) { isTransitioning = false; startAudioPlayback(); }
                 else if (state.audioUrl) { isTransitioning = true; audio.load(); }
+                setTimeout(function () {
+                    if (isResumingFromBackground) {
+                        isResumingFromBackground = false;
+                    }
+                }, 2000);
             } else if (!state.isPlaying && !audio.paused) {
                 pauseAudioPlayback();
             }
