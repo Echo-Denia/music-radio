@@ -2,7 +2,7 @@
   "name": "music-radio",
   "displayName": "music-radio",
   "description": "A music player with real-time lyrics display for VSCode",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "publisher": "Echo-Denia",
   "icon": "media/marketplace-icon.png",
   "repository": {

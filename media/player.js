@@ -2557,7 +2557,10 @@
             }
             vscode.postMessage({ command: 'seek', time: time });
         }
-        isVolumeSeeking = false;
+        if (isVolumeSeeking) {
+            isVolumeSeeking = false;
+            vscode.postMessage({ command: 'setVolume', volume: state.volume });
+        }
     });
 
     function seekToPosition(e) {
@@ -2576,7 +2579,6 @@
         var ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         var vol = Math.round(ratio * 100);
         audio.volume = ratio;
-        vscode.postMessage({ command: 'setVolume', volume: vol });
         state.volume = vol;
         volumeFill.style.width = vol + '%';
         volumeValue.textContent = vol + '%';
@@ -2630,7 +2632,11 @@
         var oldTrackId = state.currentTrack ? state.currentTrack.id : null;
         var oldIsPlaying = state.isPlaying;
         var oldAudioUrl = state.audioUrl;
+        var localVolume = state.volume;
         state = message.state;
+        if (isVolumeSeeking) {
+            state.volume = localVolume;
+        }
         syncServerClock(state);
 
         if (state.tunerState && !tunerStateSynced) {
