@@ -4,4 +4,9 @@ out/
 .vscode-test/
 *.pyc
 script/API_*.py
+<<<<<<< HEAD
 script/deal_*.py
+=======
+script/deal_*.py
+.kilo
+>>>>>>> 889627a (更新gitignore)
