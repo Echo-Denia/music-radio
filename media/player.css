@@ -49,6 +49,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  cursor: context-menu;
 }
 
 .album-art {
@@ -824,6 +825,160 @@ body {
   height: 1px;
   background: var(--vscode-menu-separatorBackground, var(--border));
   margin: 4px 0;
+}
+
+.metadata-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-family: var(--vscode-font-family);
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.metadata-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.metadata-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.metadata-toggle-btn.active {
+  color: var(--accent);
+}
+
+.metadata-panel {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 280px);
+}
+
+.metadata-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.metadata-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metadata-field label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.metadata-field input[type="text"] {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: var(--vscode-font-family);
+  outline: none;
+}
+
+.metadata-field input[type="text"]:focus {
+  border-color: var(--accent);
+}
+
+.metadata-field-row {
+  display: flex;
+  gap: 8px;
+}
+
+.metadata-field-half {
+  flex: 1;
+}
+
+.metadata-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.metadata-info-item {
+  font-size: 10px;
+  display: flex;
+  gap: 4px;
+}
+
+.metadata-info-label {
+  color: var(--text-secondary);
+}
+
+.metadata-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.metadata-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--vscode-font-family);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.metadata-btn-save {
+  background: var(--accent);
+  color: white;
+}
+
+.metadata-btn-save:hover {
+  background: var(--accent-hover);
+}
+
+.metadata-btn-saveas {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.metadata-btn-saveas:hover {
+  background: var(--border);
+}
+
+.metadata-btn-revert {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.metadata-btn-revert:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .tuner-toggle-btn {

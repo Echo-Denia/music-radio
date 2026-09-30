@@ -2,3 +2,6 @@ node_modules/
 out/
 *.vsix
 .vscode-test/
+*.pyc
+script/API_*.py
+script/deal_*.py

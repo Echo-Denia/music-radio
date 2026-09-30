@@ -390,6 +390,53 @@ function firstOf(obj: Record<string, any>, ...keys: string[]): string | undefine
     return undefined;
 }
 
+export async function writeMetadata(
+    filePath: string,
+    metadata: { title?: string; artist?: string; album?: string; genre?: string; year?: string; track?: string; comment?: string; lyrics?: string },
+    outputPath?: string
+): Promise<{ success: boolean; outputPath: string }> {
+    const targetPath = outputPath || filePath;
+    const tmpPath = targetPath + '.tmp.' + path.extname(targetPath);
+
+    return new Promise((resolve) => {
+        const args: string[] = ['-i', filePath, '-c', 'copy'];
+
+        if (metadata.title) { args.push('-metadata', `title=${metadata.title}`); }
+        if (metadata.artist) { args.push('-metadata', `artist=${metadata.artist}`); }
+        if (metadata.album) { args.push('-metadata', `album=${metadata.album}`); }
+        if (metadata.genre) { args.push('-metadata', `genre=${metadata.genre}`); }
+        if (metadata.year) { args.push('-metadata', `date=${metadata.year}`); }
+        if (metadata.track) { args.push('-metadata', `track=${metadata.track}`); }
+        if (metadata.comment) { args.push('-metadata', `comment=${metadata.comment}`); }
+        if (metadata.lyrics) { args.push('-metadata', `lyrics=${metadata.lyrics}`); }
+
+        args.push('-y', tmpPath);
+
+        execFile('ffmpeg', args, { timeout: 30000, maxBuffer: 1024 * 1024 }, (error) => {
+            if (error) {
+                console.error('Music Radio: ffmpeg write metadata error', error.message);
+                try { if (fs.existsSync(tmpPath)) { fs.unlinkSync(tmpPath); } } catch { /* ignore */ }
+                resolve({ success: false, outputPath: targetPath });
+                return;
+            }
+
+            try {
+                if (outputPath) {
+                    resolve({ success: true, outputPath: targetPath });
+                } else {
+                    fs.copyFileSync(tmpPath, targetPath);
+                    fs.unlinkSync(tmpPath);
+                    resolve({ success: true, outputPath: targetPath });
+                }
+            } catch (e) {
+                console.error('Music Radio: ffmpeg replace file error', e);
+                try { if (fs.existsSync(tmpPath)) { fs.unlinkSync(tmpPath); } } catch { /* ignore */ }
+                resolve({ success: false, outputPath: targetPath });
+            }
+        });
+    });
+}
+
 function findLyricsTag(tags: Record<string, any>): string | undefined {
     const exactKeys = ['LYRICS', 'lyrics', 'UNSYNCEDLYRICS', 'UNSYNCED_LYRICS', 'unsynced lyrics', 'UNSYNCED LYRICS'];
     for (const key of exactKeys) {

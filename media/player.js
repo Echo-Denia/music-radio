@@ -1457,7 +1457,19 @@
 
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) {
-            var estimated = getEstimatedTime();
+            var wasBackgroundPaused = isBackgroundPaused;
+            if (isBackgroundPaused) {
+                isBackgroundPaused = false;
+            }
+
+            var estimated;
+            if (wasBackgroundPaused && state.isPlaying && !audio.paused
+                && audio.currentTime > 0 && isFinite(audio.currentTime)) {
+                estimated = audio.currentTime;
+            } else {
+                estimated = getEstimatedTime();
+            }
+
             var duration = state.duration || audio.duration || 0;
             if (duration > 0 && estimated > duration) {
                 estimated = Math.min(estimated, duration - 0.5);
@@ -1467,8 +1479,7 @@
             }
             updateLyricsActiveLine(estimated);
 
-            if (isBackgroundPaused && state.isPlaying) {
-                isBackgroundPaused = false;
+            if (wasBackgroundPaused && state.isPlaying) {
                 isResumingFromBackground = true;
                 vscode.postMessage({ command: 'backgroundResume', time: estimated });
             }
@@ -1582,6 +1593,11 @@
             repeatBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/><text x="12" y="15" text-anchor="middle" font-size="8" fill="currentColor">1</text></svg>';
         } else {
             repeatBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>';
+        }
+
+        var metaPanel = document.getElementById('metadataPanel');
+        if (metaPanel && metaPanel.style.display === 'flex') {
+            loadMetadataEditor();
         }
     }
 
@@ -2160,6 +2176,10 @@
             tunerState.enabled = !tunerState.enabled;
             panel.style.display = tunerState.enabled ? 'flex' : 'none';
             tunerToggleBtn.classList.toggle('active', tunerState.enabled);
+            var metaPanel = document.getElementById('metadataPanel');
+            if (metaPanel && tunerState.enabled) metaPanel.style.display = 'none';
+            var metaBtn = document.getElementById('metadataToggleBtn');
+            if (metaBtn && tunerState.enabled) metaBtn.classList.remove('active');
             if (tunerState.enabled) {
                 ensurePipeline();
                 if (audioPipelineConnected) applyTunerState();
@@ -2172,6 +2192,103 @@
             }
             saveTuner();
         });
+    }
+
+    var metadataToggleBtn = document.getElementById('metadataToggleBtn');
+    if (metadataToggleBtn) {
+        metadataToggleBtn.addEventListener('click', function () {
+            var panel = document.getElementById('metadataPanel');
+            if (!panel) return;
+            var isVisible = panel.style.display === 'flex';
+            panel.style.display = isVisible ? 'none' : 'flex';
+            metadataToggleBtn.classList.toggle('active', !isVisible);
+            if (!isVisible) {
+                loadMetadataEditor();
+            }
+            var tunerPanel = document.getElementById('tunerPanel');
+            if (tunerPanel && !isVisible) {
+                tunerPanel.style.display = 'none';
+                tunerState.enabled = false;
+                var tBtn = document.getElementById('tunerToggleBtn');
+                if (tBtn) tBtn.classList.remove('active');
+                stopSpectrumVisualization();
+                stopOscilloscope();
+            }
+        });
+    }
+
+    var metaSaveBtn = document.getElementById('metaSaveBtn');
+    if (metaSaveBtn) {
+        metaSaveBtn.addEventListener('click', function () {
+            saveMetadata();
+        });
+    }
+
+    var metaSaveAsBtn = document.getElementById('metaSaveAsBtn');
+    if (metaSaveAsBtn) {
+        metaSaveAsBtn.addEventListener('click', function () {
+            saveMetadataAs();
+        });
+    }
+
+    var metaRevertBtn = document.getElementById('metaRevertBtn');
+    if (metaRevertBtn) {
+        metaRevertBtn.addEventListener('click', function () {
+            loadMetadataEditor();
+        });
+    }
+
+    function loadMetadataEditor() {
+        var track = state.currentTrack;
+        if (!track) return;
+        vscode.postMessage({ command: 'getTrackMetadata', trackId: track.id });
+    }
+
+    function saveMetadata() {
+        var track = state.currentTrack;
+        if (!track) return;
+        var metadata = {
+            title: document.getElementById('metaTitle').value,
+            artist: document.getElementById('metaArtist').value,
+            album: document.getElementById('metaAlbum').value,
+            genre: document.getElementById('metaGenre').value,
+            year: document.getElementById('metaYear').value,
+            track: document.getElementById('metaTrackNumber').value,
+            comment: document.getElementById('metaComment').value,
+            lyrics: document.getElementById('metaLyrics').value,
+        };
+        vscode.postMessage({ command: 'saveTrackMetadata', trackId: track.id, metadata: metadata });
+    }
+
+    function saveMetadataAs() {
+        var track = state.currentTrack;
+        if (!track) return;
+        var metadata = {
+            title: document.getElementById('metaTitle').value,
+            artist: document.getElementById('metaArtist').value,
+            album: document.getElementById('metaAlbum').value,
+            genre: document.getElementById('metaGenre').value,
+            year: document.getElementById('metaYear').value,
+            track: document.getElementById('metaTrackNumber').value,
+            comment: document.getElementById('metaComment').value,
+            lyrics: document.getElementById('metaLyrics').value,
+        };
+        vscode.postMessage({ command: 'saveTrackMetadataAs', trackId: track.id, metadata: metadata });
+    }
+
+    function populateMetadataFields(metadata) {
+        document.getElementById('metaTitle').value = metadata.title || '';
+        document.getElementById('metaArtist').value = metadata.artist || '';
+        document.getElementById('metaAlbum').value = metadata.album || '';
+        document.getElementById('metaGenre').value = '';
+        document.getElementById('metaYear').value = '';
+        document.getElementById('metaTrackNumber').value = '';
+        document.getElementById('metaComment').value = '';
+        document.getElementById('metaLyrics').value = metadata.lyrics || '';
+        document.getElementById('metaFormat').textContent = metadata.format || '-';
+        document.getElementById('metaSampleRate').textContent = metadata.sampleRate ? (metadata.sampleRate / 1000).toFixed(1) + ' kHz' : '-';
+        document.getElementById('metaBitDepth').textContent = metadata.bitDepth ? metadata.bitDepth + ' bit' : '-';
+        document.getElementById('metaBitrate').textContent = metadata.bitrate ? Math.round(metadata.bitrate / 1000) + ' kbps' : '-';
     }
 
     var eqPresetSelect = document.getElementById('eqPresetSelect');
@@ -2610,6 +2727,7 @@
         } else if (message.command === 'panelBecameVisible') {
             if (stateUpdateTimer) { clearTimeout(stateUpdateTimer); stateUpdateTimer = null; }
             if (pendingStateUpdate) { applyState(pendingStateUpdate); pendingStateUpdate = null; }
+            if (isBackgroundPaused) { isBackgroundPaused = false; }
             if (state.isPlaying && audio.paused) {
                 isResumingFromBackground = true;
                 setTimeout(function () {
@@ -2625,6 +2743,8 @@
                 if (pbvDur > 0 && !isSeeking) updateProgressUI(Math.min(pbvEst, pbvDur), pbvDur);
                 updateLyricsActiveLine(pbvEst);
             }, 100);
+        } else if (message.command === 'trackMetadata') {
+            populateMetadataFields(message.metadata);
         }
     });
 
@@ -2775,6 +2895,41 @@
     updatePlayerInfo();
     renderPlaylist();
     renderLyrics();
+
+    var nowPlayingEl = document.querySelector('.now-playing');
+    if (nowPlayingEl) {
+        nowPlayingEl.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var track = state.currentTrack;
+            if (!track) return;
+            var menu = document.createElement('div');
+            menu.className = 'context-menu';
+            var revealIcon = '<svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.5.7-1.5 1.5l-.01 11c0 .83.67 1.5 1.5 1.5h16c.83 0 1.5-.67 1.5-1.5v-9c0-.83-.67-1.5-1.5-1.5zm0 11H4V8h16v9z"/></svg>';
+            var copyIcon = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+            var menuItems = [
+                { label: 'Reveal in File Explorer', icon: revealIcon, action: function () { vscode.postMessage({ command: 'revealInExplorer', trackId: track.id }); } },
+                { label: 'Copy Absolute Path', icon: copyIcon, action: function () { vscode.postMessage({ command: 'copyAbsolutePath', trackId: track.id }); } },
+                { label: 'Copy Relative Path', icon: copyIcon, action: function () { vscode.postMessage({ command: 'copyRelativePath', trackId: track.id }); } },
+            ];
+            menuItems.forEach(function (item) {
+                var el = document.createElement('div');
+                el.className = 'context-menu-item';
+                el.innerHTML = item.icon + '<span>' + escapeHtml(item.label) + '</span>';
+                el.addEventListener('click', function () { closeContextMenu(); item.action(); });
+                menu.appendChild(el);
+            });
+            document.body.appendChild(menu);
+            closeContextMenu();
+            activeContextMenu = menu;
+            var menuRect = menu.getBoundingClientRect();
+            var finalX = e.clientX, finalY = e.clientY;
+            if (finalX + menuRect.width > window.innerWidth) finalX = window.innerWidth - menuRect.width - 4;
+            if (finalY + menuRect.height > window.innerHeight) finalY = window.innerHeight - menuRect.height - 4;
+            menu.style.left = finalX + 'px';
+            menu.style.top = finalY + 'px';
+        });
+    }
 
     if (state.audioUrl) {
         lastAudioUrl = state.audioUrl;

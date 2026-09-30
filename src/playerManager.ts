@@ -561,6 +561,14 @@ export class PlayerManager {
         };
     }
 
+    getCachedLyrics(filePath: string): Lyrics | null {
+        const cached = metadataCache.get(filePath);
+        if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+            return cached.lyrics;
+        }
+        return null;
+    }
+
     saveTunerState(tunerState: any): void {
         this._tunerState = tunerState;
         this.context.globalState.update('tunerState', tunerState);

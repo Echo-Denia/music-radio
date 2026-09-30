@@ -1,0 +1,64 @@
+# Conda environment for music processing tools
+# Export from: conda env export -n index-tts --from-history
+# Platform: Windows (cross-platform pip dependencies listed below)
+
+name: index-tts
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Core Python
+  - python=3.10
+  # Audio / Video Processing
+  - ffmpeg>=4.3
+  - libsndfile
+  - portaudio
+  - pyaudio
+  - lame
+  # GUI & Plotting
+  - matplotlib
+  - customtkinter
+  # Japanese Text Processing
+  - pykakasi
+  - jaconv
+  # Chinese Text Conversion
+  - zhconv
+  # Metadata Tagging
+  - mutagen
+  # Simpler VAD
+  - webrtcvad
+  # Utilities
+  - send2trash
+  - tqdm
+  - pyyaml
+  - requests
+  - numpy
+  - pandas
+  - scikit-learn
+  - joblib
+  - pip
+  # pip-only packages
+  - pip:
+      - openai-whisper>=20250625
+      - torch>=2.0.0
+      - torchaudio>=2.0.0
+      - transformers>=4.36.0
+      - demucs>=4.1.0
+      - pyannote-audio>=3.0.0
+      - pyannote-core>=5.0.0
+      - pykakasi>=2.0.0
+      - zhconv>=1.4.0
+      - mutagen>=1.46.0
+      - webrtcvad>=2.0.10
+      - send2trash>=1.8.0
+      - tqdm>=4.60.0
+      - pyyaml>=6.0
+      - requests>=2.28.0
+      - huggingface-hub>=0.20.0
+      - librosa>=0.10.0
+      - Pillow>=9.0.0
+      - sentencepiece>=0.1.96
+      - accelerate>=0.20.0
+      - safetensors>=0.3.0
+      - numpy>=1.24.0
+      - scipy>=1.10.0

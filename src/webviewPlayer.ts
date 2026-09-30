@@ -3,6 +3,7 @@ import * as path from 'path';
 import { PlayerManager } from './playerManager';
 import { Track } from './types';
 import { getServerPort } from './audioServer';
+import { writeMetadata } from './metadataReader';
 
 export class PlayerWebviewPanel {
     public static currentPanel: PlayerWebviewPanel | undefined;
@@ -265,6 +266,68 @@ export class PlayerWebviewPanel {
                 }
                 break;
             }
+            case 'getTrackMetadata': {
+                const mtTrack = this.findTrackById(message.trackId);
+                if (mtTrack) {
+                    const cachedLyrics = this.playerManager.getCachedLyrics(mtTrack.filePath);
+                    const metadata = {
+                        title: mtTrack.title,
+                        artist: mtTrack.artist,
+                        album: mtTrack.album,
+                        filePath: mtTrack.filePath,
+                        format: mtTrack.format || path.extname(mtTrack.filePath).slice(1).toUpperCase(),
+                        sampleRate: mtTrack.sampleRate || 0,
+                        bitDepth: mtTrack.bitDepth || 0,
+                        bitrate: mtTrack.bitrate || 0,
+                        fileSize: mtTrack.fileSize || 0,
+                        lyrics: cachedLyrics ? cachedLyrics.rawText || cachedLyrics.lines.map(l => l.text).join('\n') : '',
+                    };
+                    this._panel.webview.postMessage({
+                        command: 'trackMetadata',
+                        metadata: metadata,
+                    });
+                }
+                break;
+            }
+            case 'saveTrackMetadata': {
+                const saveTrack = this.findTrackById(message.trackId);
+                if (saveTrack && message.metadata) {
+                    const result = await writeMetadata(saveTrack.filePath, message.metadata);
+                    if (result.success) {
+                        vscode.window.showInformationMessage('Metadata saved successfully.');
+                        if (message.metadata.title) { saveTrack.title = message.metadata.title; }
+                        if (message.metadata.artist) { saveTrack.artist = message.metadata.artist; }
+                        if (message.metadata.album) { saveTrack.album = message.metadata.album; }
+                        this._postState('trackChange');
+                    } else {
+                        vscode.window.showErrorMessage('Failed to save metadata.');
+                    }
+                }
+                break;
+            }
+            case 'saveTrackMetadataAs': {
+                const sasTrack = this.findTrackById(message.trackId);
+                if (sasTrack && message.metadata) {
+                    const defaultUri = vscode.Uri.file(
+                        path.join(path.dirname(sasTrack.filePath), path.basename(sasTrack.filePath))
+                    );
+                    const saveUri = await vscode.window.showSaveDialog({
+                        defaultUri: defaultUri,
+                        filters: { 'Audio Files': ['mp3', 'flac', 'wav', 'ogg', 'm4a', 'aac', 'wma', 'opus'] },
+                    });
+                    if (saveUri) {
+                        const result = await writeMetadata(sasTrack.filePath, message.metadata, saveUri.fsPath);
+                        if (result.success) {
+                            vscode.window.showInformationMessage(`Saved as: ${saveUri.fsPath}`);
+                            await this.playerManager.addMusicFolder(path.dirname(saveUri.fsPath));
+                            vscode.commands.executeCommand('music-radio.refreshLibrary');
+                        } else {
+                            vscode.window.showErrorMessage('Failed to save metadata.');
+                        }
+                    }
+                }
+                break;
+            }
         }
     }
 
@@ -400,6 +463,11 @@ export class PlayerWebviewPanel {
             <button class="tuner-toggle-btn" id="tunerToggleBtn" title="Audio Tuner">
                 <svg viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
                 <span>Tuner</span>
+            </button>
+
+            <button class="metadata-toggle-btn" id="metadataToggleBtn" title="Metadata Editor">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                <span>Metadata</span>
             </button>
 
             <div class="tuner-panel" id="tunerPanel">
@@ -637,6 +705,56 @@ export class PlayerWebviewPanel {
                     </div>
                     <div class="spectrum-container" style="display:none">
                         <canvas id="oscilloscopeCanvas" width="300" height="48"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metadata-panel" id="metadataPanel">
+                <div class="metadata-section">
+                    <div class="metadata-field">
+                        <label>Title</label>
+                        <input type="text" id="metaTitle" placeholder="Track title">
+                    </div>
+                    <div class="metadata-field">
+                        <label>Artist</label>
+                        <input type="text" id="metaArtist" placeholder="Artist name">
+                    </div>
+                    <div class="metadata-field">
+                        <label>Album</label>
+                        <input type="text" id="metaAlbum" placeholder="Album name">
+                    </div>
+                    <div class="metadata-field">
+                        <label>Genre</label>
+                        <input type="text" id="metaGenre" placeholder="Genre">
+                    </div>
+                    <div class="metadata-field-row">
+                        <div class="metadata-field metadata-field-half">
+                            <label>Year</label>
+                            <input type="text" id="metaYear" placeholder="Year">
+                        </div>
+                        <div class="metadata-field metadata-field-half">
+                            <label>Track #</label>
+                            <input type="text" id="metaTrackNumber" placeholder="Track number">
+                        </div>
+                    </div>
+                    <div class="metadata-field">
+                        <label>Comment</label>
+                        <input type="text" id="metaComment" placeholder="Comment">
+                    </div>
+                    <div class="metadata-field">
+                        <label>Lyrics</label>
+                        <textarea id="metaLyrics" placeholder="Lyrics" rows="6"></textarea>
+                    </div>
+                    <div class="metadata-info">
+                        <div class="metadata-info-item"><span class="metadata-info-label">Format:</span><span id="metaFormat">-</span></div>
+                        <div class="metadata-info-item"><span class="metadata-info-label">Sample Rate:</span><span id="metaSampleRate">-</span></div>
+                        <div class="metadata-info-item"><span class="metadata-info-label">Bit Depth:</span><span id="metaBitDepth">-</span></div>
+                        <div class="metadata-info-item"><span class="metadata-info-label">Bitrate:</span><span id="metaBitrate">-</span></div>
+                    </div>
+                    <div class="metadata-actions">
+                        <button class="metadata-btn metadata-btn-save" id="metaSaveBtn">Save</button>
+                        <button class="metadata-btn metadata-btn-saveas" id="metaSaveAsBtn">Save As...</button>
+                        <button class="metadata-btn metadata-btn-revert" id="metaRevertBtn">Revert</button>
                     </div>
                 </div>
             </div>
