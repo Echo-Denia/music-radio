@@ -1,4 +1,4 @@
-﻿﻿import * as vscode from 'vscode';
+﻿import * as vscode from 'vscode';
 import * as path from 'path';
 import { PlayerManager } from './playerManager';
 import { MusicLibraryProvider, searchTracks } from './musicLibrary';
@@ -152,6 +152,7 @@ async function activateHostMode(context: vscode.ExtensionContext) {
     });
 
     const scanFolderCmd = vscode.commands.registerCommand('music-radio.scanFolder', async () => {
+        playerManager.clearMetadataCache();
         await playerManager.scanAllFolders();
         musicLibraryProvider.refresh();
         vscode.window.showInformationMessage('Music folders scanned');
@@ -187,6 +188,7 @@ async function activateHostMode(context: vscode.ExtensionContext) {
     });
 
     const refreshLibraryCmd = vscode.commands.registerCommand('music-radio.refreshLibrary', async () => {
+        playerManager.clearMetadataCache();
         await playerManager.scanAllFolders();
         musicLibraryProvider.refresh();
         vscode.window.showInformationMessage('Music library refreshed');

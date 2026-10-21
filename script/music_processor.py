@@ -992,10 +992,11 @@ def check_and_process_existing_lyrics(
         for field in synced_fields:
             if field in tags:
                 lyrics_data = []
-                for line in tags[field]:
-                    parsed = _parse_timestamp_line(line)
-                    if parsed:
-                        lyrics_data.append(parsed)
+                for raw in tags[field]:
+                    for line in str(raw).splitlines():
+                        parsed = _parse_timestamp_line(line)
+                        if parsed:
+                            lyrics_data.append(parsed)
                 if lyrics_data:
                     lyrics_data.sort(key=lambda x: x[0])
                     logger.info("Found FLAC synchronized lyrics")
@@ -4629,13 +4630,14 @@ def process_flac_lyrics_with_romaji(
                 logger.info(f"Processing {field} lyrics...")
                 lyrics_lines = audio.tags[field]
                 text_lines = []
-                for line in lyrics_lines:
-                    parsed = _parse_timestamp_line(line)
-                    if parsed:
-                        ts, text = parsed
-                        text_lines.append(f"{_format_timestamp(ts)}{text.strip()}")
-                    else:
-                        text_lines.append(line)
+                for raw in lyrics_lines:
+                    for line in str(raw).splitlines():
+                        parsed = _parse_timestamp_line(line)
+                        if parsed:
+                            ts, text = parsed
+                            text_lines.append(f"{_format_timestamp(ts)}{text.strip()}")
+                        else:
+                            text_lines.append(line)
                 processed_lyrics = add_romaji(text_lines)
                 audio.tags[field] = processed_lyrics
                 processed_tags.append(field)

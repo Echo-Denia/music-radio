@@ -103,6 +103,10 @@ export class PlayerManager {
         await this.scanAllFolders();
     }
 
+    clearMetadataCache(): void {
+        metadataCache.clear();
+    }
+
     async reloadMusicFolder(folderPath: string): Promise<void> {
         if (!this.musicFolders.includes(folderPath)) {
             return;
