@@ -2,7 +2,7 @@
   "name": "music-radio",
   "displayName": "music-radio",
   "description": "A music player with real-time lyrics display for VSCode",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publisher": "Echo-Denia",
   "icon": "media/marketplace-icon.png",
   "repository": {
@@ -89,6 +89,10 @@
         "title": "Music Radio: Add Music Folder"
       },
       {
+        "command": "music-radio.openFile",
+        "title": "Music Radio: Open File"
+      },
+      {
         "command": "music-radio.scanFolder",
         "title": "Music Radio: Scan Music Folders"
       },
@@ -158,6 +162,11 @@
         },
         {
           "command": "music-radio.addFolder",
+          "when": "view == music-radio-library",
+          "group": "navigation"
+        },
+        {
+          "command": "music-radio.openFile",
           "when": "view == music-radio-library",
           "group": "navigation"
         },

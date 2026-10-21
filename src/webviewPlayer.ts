@@ -168,6 +168,33 @@ export class PlayerWebviewPanel {
             case 'backgroundResume':
                 this.playerManager.backgroundResume(message.time);
                 break;
+            case 'openFile': {
+                const fileResult = await vscode.window.showOpenDialog({
+                    canSelectFiles: true,
+                    canSelectFolders: false,
+                    canSelectMany: false,
+                    title: 'Open Music File',
+                    filters: {
+                        'Audio Files': ['mp3', 'flac', 'wav', 'ogg', 'm4a', 'aac', 'wma', 'opus', 'mp4'],
+                        'All Files': ['*'],
+                    },
+                });
+                if (fileResult && fileResult.length > 0) {
+                    const filePath = fileResult[0].fsPath;
+                    const track: Track = {
+                        id: `file_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                        filePath: filePath,
+                        title: path.basename(filePath, path.extname(filePath)),
+                        artist: 'Unknown',
+                        album: 'Unknown',
+                        duration: 0,
+                        fileName: path.basename(filePath),
+                        format: path.extname(filePath).slice(1).toUpperCase(),
+                    };
+                    await this.playerManager.playTrack(track);
+                }
+                break;
+            }
             case 'addFolder': {
                 const result = await vscode.window.showOpenDialog({
                     canSelectFiles: false,
@@ -778,6 +805,9 @@ export class PlayerWebviewPanel {
             <div class="playlist-header">
                 <h3>Playlist</h3>
                 <div class="playlist-actions">
+                    <button class="action-btn" id="openFileBtn" title="Open File">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    </button>
                     <button class="action-btn" id="addFolderBtn" title="Add Folder">
                         <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z"/></svg>
                     </button>

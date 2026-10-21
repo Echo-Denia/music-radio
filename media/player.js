@@ -1056,6 +1056,7 @@
     const albumArt = document.getElementById('albumArt');
     const playlist = document.getElementById('playlist');
     const addFolderBtn = document.getElementById('addFolderBtn');
+    const openFileBtn = document.getElementById('openFileBtn');
     const refreshLibraryBtn = document.getElementById('refreshLibraryBtn');
     const clearPlaylistBtn = document.getElementById('clearPlaylistBtn');
     const reloadExtensionBtn = document.getElementById('reloadExtensionBtn');
@@ -2164,6 +2165,7 @@
     shuffleBtn.addEventListener('click', function () { vscode.postMessage({ command: 'toggleShuffle' }); });
     repeatBtn.addEventListener('click', function () { vscode.postMessage({ command: 'toggleRepeat' }); });
     addFolderBtn.addEventListener('click', function () { vscode.postMessage({ command: 'addFolder' }); });
+    openFileBtn.addEventListener('click', function () { vscode.postMessage({ command: 'openFile' }); });
     refreshLibraryBtn.addEventListener('click', function () { vscode.postMessage({ command: 'scanFolder' }); });
     clearPlaylistBtn.addEventListener('click', function () { vscode.postMessage({ command: 'clearPlaylist' }); });
     reloadExtensionBtn.addEventListener('click', function () { vscode.postMessage({ command: 'reloadExtension' }); });

@@ -151,6 +151,34 @@ async function activateHostMode(context: vscode.ExtensionContext) {
         }
     });
 
+    const openFileCmd = vscode.commands.registerCommand('music-radio.openFile', async () => {
+        const fileResult = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false,
+            title: 'Open Music File',
+            filters: {
+                'Audio Files': ['mp3', 'flac', 'wav', 'ogg', 'm4a', 'aac', 'wma', 'opus', 'mp4'],
+                'All Files': ['*'],
+            },
+        });
+        if (fileResult && fileResult.length > 0) {
+            const filePath = fileResult[0].fsPath;
+            const track: Track = {
+                id: `file_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                filePath: filePath,
+                title: path.basename(filePath, path.extname(filePath)),
+                artist: 'Unknown',
+                album: 'Unknown',
+                duration: 0,
+                fileName: path.basename(filePath),
+                format: path.extname(filePath).slice(1).toUpperCase(),
+            };
+            await playerManager.playTrack(track);
+            PlayerWebviewPanel.createOrShow(context.extensionUri, playerManager);
+        }
+    });
+
     const scanFolderCmd = vscode.commands.registerCommand('music-radio.scanFolder', async () => {
         playerManager.clearMetadataCache();
         await playerManager.scanAllFolders();
@@ -328,6 +356,7 @@ async function activateHostMode(context: vscode.ExtensionContext) {
         toggleShuffleCmd,
         toggleRepeatCmd,
         addFolderCmd,
+        openFileCmd,
         scanFolderCmd,
         playTrackCmd,
         playNextCmd,
