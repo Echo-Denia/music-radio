@@ -2659,17 +2659,14 @@ def process_audio_file(
         }
 
     # ---- Manually specified language: skip detection ----
+    vocal_for_detect = None
     if manual_language:
         logger.info(f"Manually specified language: {manual_language}, skipping auto-detection")
         detected_lang = manual_language
     else:
         # ---- Demucs vocal separation for more accurate language detection ----
-        vocal_for_detect = None
-        vocal_temp_dir = None
         if DEMUCS_AVAILABLE and DEMUCS_CONFIG.get("enabled", True):
             vocal_for_detect = separate_vocals_with_demucs(audio_path)
-            if vocal_for_detect:
-                vocal_temp_dir = os.path.dirname(vocal_for_detect)
 
         try:
             detected_lang = detect_language(
@@ -2678,11 +2675,16 @@ def process_audio_file(
                 manual_language=None,
             )
         finally:
-            if vocal_temp_dir and os.path.exists(vocal_temp_dir):
-                shutil.rmtree(vocal_temp_dir, ignore_errors=True)
+            # Do NOT delete vocal_for_detect here — it will be reused in transcription
+            pass
 
     if detected_lang == "nn":
         logger.info("Detected instrumental, skipping all processing")
+        # Clean up Demucs temp vocal files if not needed
+        if vocal_for_detect and os.path.exists(vocal_for_detect):
+            vocal_temp_dir = os.path.dirname(vocal_for_detect)
+            if vocal_temp_dir.startswith(tempfile.gettempdir()):
+                shutil.rmtree(vocal_temp_dir, ignore_errors=True)
         audio_output_dir = os.path.join(os.path.dirname(audio_path), "audio_with_lyrics")
         os.makedirs(audio_output_dir, exist_ok=True)
         base_name = os.path.basename(audio_path)
@@ -2704,6 +2706,7 @@ def process_audio_file(
     return transcribe_and_translate_with_lang(
         audio_path, whisper_model_size, device, local_model_dir,
         vad_model_path, translation_mode, llm_api_config, detected_lang,
+        vocal_audio_path=vocal_for_detect,
     )
 
 
@@ -2716,6 +2719,7 @@ def transcribe_and_translate_with_lang(
     translation_mode: str = "line_by_line",
     llm_api_config: Optional[Dict[str, Any]] = None,
     detected_lang: Optional[str] = None,
+    vocal_audio_path: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     Transcribe and translate with known language, using Demucs + VAD smart segmentation.
@@ -2738,6 +2742,8 @@ def transcribe_and_translate_with_lang(
         LLM API config.
     detected_lang : str or None
         Pre-detected language code.
+    vocal_audio_path : str or None
+        Pre-separated vocal audio path (from Demucs) to reuse.
 
     Returns
     -------
@@ -2771,7 +2777,10 @@ def transcribe_and_translate_with_lang(
 
         # ---- Demucs vocal separation ----
         vocal_audio = audio_path
-        if DEMUCS_AVAILABLE and DEMUCS_CONFIG.get("enabled", True):
+        if vocal_audio_path and os.path.exists(vocal_audio_path):
+            vocal_audio = vocal_audio_path
+            logger.info("Reusing Demucs-separated vocals from language detection step")
+        elif DEMUCS_AVAILABLE and DEMUCS_CONFIG.get("enabled", True):
             vocal_audio = separate_vocals_with_demucs(audio_path) or audio_path
         else:
             logger.info("Demucs not enabled, using raw audio for recognition")
